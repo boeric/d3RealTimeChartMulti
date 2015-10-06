@@ -43,14 +43,14 @@ function realTimeChartMulti() {
     yTitle = yTitle || "";
 
     // compute component dimensions
-    var chartTitleDim = chartTitle == "" ? 0 : dimension.chartTitle;
-    var xTitleDim = xTitle == "" ? 0 : dimension.xTitle;
-    var yTitleDim = yTitle == "" ? 0 : dimension.yTitle;
-    var xAxisDim = !drawXAxis ? 0 : dimension.xAxis;
-    var yAxisDim = !drawYAxis ? 0 : dimension.yAxis;
-    var navChartDim = !drawNavChart ? 0 : dimension.navChart;
+    var chartTitleDim = chartTitle == "" ? 0 : dimension.chartTitle,
+        xTitleDim = xTitle == "" ? 0 : dimension.xTitle,
+        yTitleDim = yTitle == "" ? 0 : dimension.yTitle,
+        xAxisDim = !drawXAxis ? 0 : dimension.xAxis,
+        yAxisDim = !drawYAxis ? 0 : dimension.yAxis,
+        navChartDim = !drawNavChart ? 0 : dimension.navChart;
 
-    // compute chart dimension and offset
+    // compute dimension of main and nav charts, and offsets
     var marginTop = margin.top + chartTitleDim;
     height = svgHeight - marginTop - margin.bottom - chartTitleDim - xTitleDim - xAxisDim - navChartDim + 30;
     heightNav = navChartDim - margin.topNav - margin.bottomNav;
@@ -163,18 +163,18 @@ function realTimeChartMulti() {
         .style("shape-rendering", "crispEdges")
         .attr("transform", "translate(0, 0)");
 
-    // add group to hold line and area paths
+    // add group to data items
     var navG = nav.append("g")
         .attr("class", "nav");
 
     // add group to hold nav x axis
+    // please note that a clip path has yet to be added here (tbd)
     var xAxisGNav = nav.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + heightNav + ")");
 
-    // define nav scales
+    // define nav chart scales
     xNav = d3.time.scale().range([0, widthNav]);
-    //var yNav = d3.scale.linear().domain([minY, maxY]).range([heightNav, 0]);
     yNav = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([heightNav, 0], 1)
 
     // define nav axis
@@ -188,8 +188,7 @@ function realTimeChartMulti() {
     var startTime = new Date(endTime.getTime() - maxSeconds * 1000);
     var interval = endTime.getTime() - startTime.getTime();
 
-    // then the viewport time domain (what's visible in the main chart 
-    // and the viewport in the nav chart)
+    // then the viewport time domain (what's visible in the main chart and the viewport in the nav chart)
     var endTimeViewport = new Date(ts);
     var startTimeViewport = new Date(endTime.getTime() - width / pixelsPerSecond * 1000);
     var intervalViewport = endTimeViewport.getTime() - startTimeViewport.getTime();
@@ -211,9 +210,10 @@ function realTimeChartMulti() {
         .on("brush", function () {
           // get the current time extent of viewport
           var extent = viewport.extent();
-
           startTimeViewport = extent[0];
           endTimeViewport = extent[1];
+
+          // compute viewport extent in milliseconds
           intervalViewport = endTimeViewport.getTime() - startTimeViewport.getTime();
           offsetViewport = startTimeViewport.getTime() - startTime.getTime();
 
@@ -240,35 +240,22 @@ function realTimeChartMulti() {
         .selectAll("rect")
         .attr("height", heightNav);
 
-
-    // initial invocation
+    // initial invocation; update display
     data = [];
-
-    // update display
     refresh();
 
-    var count = 0;
-
-
     // function to refresh the viz upon changes of the time domain 
-    // (which happens constantly), or after arrival of new data,
-    // or at init
+    // (which happens constantly), or after arrival of new data, or at init
     function refresh() {
 
-      // process data to remove too late or too early data items 
-      // (the latter could occur if the chart is halted, while data
-      // is being pumped in)
+      // process data to remove too late data items 
       data = data.filter(function(d) {
-        if    (d.time.getTime() > startTime.getTime() 
-            //&& d.time.getTime() < endTime.getTime()
-        ) 
-          return true;
+        if (d.time.getTime() > startTime.getTime()) return true;
       })
 
       // determine number of categories
       var categoryCount = yDomain.length;
-      //if (debug) console.log("yDomain", yDomain)
-
+      if (debug) console.log("yDomain", yDomain)
 
       // here we bind the new data to the main chart
       // note: no key function is used here; therefore the data binding is
@@ -289,45 +276,30 @@ function realTimeChartMulti() {
       // remove items
       updateSel.exit().remove();
 
-      // append items
+      // add items
       updateSel.enter()
           .append(function(d) { 
-            if (debug) {
-              console.log("d", JSON.stringify(d));
-            }
-            var type = d.type;
-            //console.log("type", type)
-            if (type == undefined) type = "rect";
-            //var node = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            if (debug) { console.log("d", JSON.stringify(d)); }
+            if (d.type == undefined) console.error(JSON.stringify(d))
+            var type = d.type || "circle";
             var node = document.createElementNS("http://www.w3.org/2000/svg", type);
-            //console.log("node", node);
             return node; 
           })
           .attr("class", "bar")
           .attr("id", function() { 
             return "bar-" + barId++; 
-          })
-          .attr("shape-rendering", "crispEdges");
+          });
 
-      updateSel.each(function(a, b, c, d) {
-        //console.log("count", count)
-        //if (++count > 100) console.log(this, a, b, c, d)
-      })
-
-      // update items
+      // update items; added items are now part of the update selection
       updateSel
           .attr("x", function(d) { 
             var retVal = null;
             switch (getTagName(this)) {
               case "rect":
-                //retVal = Math.round(x(d.time) - barWidth);
                 var size = d.size || 6;
                 retVal = Math.round(x(d.time) - size / 2);
                 break;
-              case "circle":
-                break;
-              case "polygon":
-                break;
+              default:
             }
             return retVal; 
           })
@@ -335,55 +307,40 @@ function realTimeChartMulti() {
             var retVal = null;
             switch (getTagName(this)) {
               case "rect":
-                //retVal = y(d.value);
                 var size = d.size || 6;
                 retVal = y(d.category) - size / 2;
                 break;
-              case "circle":
-                break;
-              case "polygon":
-                break;
+              default:
             }
             return retVal; 
           })
           .attr("cx", function(d) { 
             var retVal = null;
             switch (getTagName(this)) {
-              case "rect":
-                break;
               case "circle":
-                //retVal = Math.round(x(d.time) - barWidth);
                 retVal = Math.round(x(d.time));
                 break;
-              case "polygon":
-                break;
+              default:
             }
             return retVal; 
           })
           .attr("cy", function(d) { 
             var retVal = null;
             switch (getTagName(this)) {
-              case "rect":
-                break;
               case "circle":
-                //retVal = y(d.value);
                 retVal = y(d.category);
                 break;
-              case "polygon":
-                break;
+              default:
             }
             return retVal; 
           })
           .attr("r", function(d) { 
             var retVal = null;
             switch (getTagName(this)) {
-              case "rect":
-                break;
               case "circle":
                 retVal = d.size / 2;
                 break;
-              case "polygon":
-                break;
+              default:
             }
             return retVal; 
           })
@@ -391,13 +348,9 @@ function realTimeChartMulti() {
             var retVal = null;
             switch (getTagName(this)) {
               case "rect":
-                //retVal = barWidth;
                 retVal = d.size;
                 break;
-              case "circle":
-                break;
-              case "polygon":
-                break;
+              default:
             }
             return retVal; 
           })
@@ -405,36 +358,34 @@ function realTimeChartMulti() {
             var retVal = null;
             switch (getTagName(this)) {
               case "rect":
-                //retVal = height - y(d.value); 
-                //retVal = height - y(d.category); 
                 retVal = d.size; 
                 break;
-              case "circle":
-                break;
-              case "polygon":
-                break;
+              default:
             }
             return retVal; 
           })
-          .style("fill", function(d) { return d.color == undefined ? "black" : d.color; })
-          //.style("stroke", "none")
+          .style("fill", function(d) { return d.color || "black"; })
+          //.style("stroke", "orange")
           //.style("stroke-width", "1px")
-          //.style("stroke-opacity", 0.5)
-          .style("fill-opacity", function(d) {
-            return d.opacity;
-          });
+          //.style("stroke-opacity", 0.8)
+          .style("fill-opacity", function(d) { return d.opacity || 1; });
 
+      // create update selection for the nav chart, by applying data
       var updateSelNav = navG.selectAll("circle")
           .data(data);
 
+      // remove items
+      updateSelNav.exit().remove();
+
+      // add items
       updateSelNav.enter().append("circle")
           .attr("r", 1)
           .attr("fill", "black")
 
+      // added items now part of update selection; set coordinates of points
       updateSelNav
           .attr("cx", function(d) {
             return Math.round(xNav(d.time));
-
           })
           .attr("cy", function(d) {
             return yNav(d.category);
@@ -445,7 +396,6 @@ function realTimeChartMulti() {
 
     function getTagName(that) {
       var tagName = d3.select(that).node().tagName;
-      //console.log("--tagName", tagName);
       return (tagName);
     }
 
@@ -487,7 +437,6 @@ function realTimeChartMulti() {
     return chart;
 
   } // end chart function
-
 
 
   // chart getters/setters
@@ -543,13 +492,16 @@ function realTimeChartMulti() {
     return chart;       
   }
 
-  // yItems
+  // yItems (can be dynamically added after chart construction)
   chart.yDomain = function(_) {
     if (arguments.length == 0) return yDomain;
     yDomain = _;
     if (svg) {
+      // update the y ordinal scale
       y = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([height, 0], 1);
+      // update the y axis
       yAxis.scale(y)(yAxisG);
+      // update the y ordinal scale for the nav chart
       yNav = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([heightNav, 0], 1);
     }
     return chart;       

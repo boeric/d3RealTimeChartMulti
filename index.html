@@ -156,7 +156,6 @@ function dataGenerator() {
       if (doSimple) {
         obj = {
           // simple data item (simple black circle of constant size)
-          value: 40,
           time: now,
           color: "black",
           opacity: 1,
@@ -167,13 +166,13 @@ function dataGenerator() {
 
       } else {
         obj = {
-          // complex data item; four attributes (type, color, opacity and size) are changing dynamically
-          value: 40,
+          // complex data item; four attributes (type, color, opacity and size) are changing dynamically with each iteration (as an example)
           time: now,
           color: color(d % 10),
           opacity: Math.max(Math.random(), 0.3),
           category: "Category" + (i + 1),
-          type: shapes[Math.round(Math.random() * (shapes.length - 1))],
+          //type: shapes[Math.round(Math.random() * (shapes.length - 1))], // the module currently doesn't support dynamically changed svg types (need to add key function to data, or method to dynamically replace svg object – tbd)
+          type: "circle",
           size: Math.max(Math.round(Math.random() * 12), 4),
         };
       }
