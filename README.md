@@ -6,7 +6,7 @@ The chart's time domain is moving with the passage of time, which means that any
 
 A nice future capability is to allow the caller to dynamically specify the type of object to be created for each data item. The infrastructure is in place for such feature to dynamically create different svg object on the fly (using the **document.createElementNS()** function), but given the current data binding mechanism (without a key function), the data is just "passing through" already created elements (not necessarily of the same type as what the is specified by the data). 
 
-Another nice capability would be to use **d3 transitions** to create smooth horizontal scrolling, as opposed to the current 200ms leftward jump. Any ideas how to implement this is appreciated.
+Another nice capability would be to use **d3 transitions** to create smooth horizontal scrolling, as opposed to the current 200ms leftward jump. Any idea how to implement this is appreciated.
 
 The component adheres to the pattern described in [Towards Reusable Chart](http://bost.ocks.org/mike/chart/). 
 
