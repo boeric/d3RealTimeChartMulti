@@ -1,6 +1,6 @@
 ## D3 Based Real Time Chart with Multiple Inputs
 
-The real time chart is a resuable Javascript component that accepts real time data. The purpose is to show the arrival time of real time events (or lack thereof), piped to the browser (for example via Websockets). Various attributes of each event can be articulated using **size**, **color** and **opacity**of the object generated for the event.   
+The real time chart is a resuable Javascript component that accepts real time data. The purpose is to show the arrival time of real time events (or lack thereof), piped to the browser (for example via Websockets). Various attributes of each event can be articulated using **size**, **color** and **opacity** of the object generated for the event.   
 
 The component allows multiple asynchronous data streams to be viewed, each in a horizontal band across the SVG. New data streams can be added dynamically (as they are discovered by the caller over time), simply by calling the `yDomain` method with the new array of data series names. The chart will automatically fit the new data series into the available space in the SVG. 
 
