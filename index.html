@@ -4,31 +4,17 @@
   <meta charset="utf-8">
   <!-- Author: Bo Ericsson -->
   <title>Real Time Chart Multi</title>
-  <link rel=stylesheet type=text/css href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap.min.css" media="all">
-  <!--<link rel=stylesheet type=text/css href="../_lib/bootstrap.min.css" media="all">-->
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap.min.css" media="all">
   <style>
-  .axis text {
-    font: 10px sans-serif;
-  }
   .chartTitle {
     font-size: 12px;
     font-weight: bold;
     text-anchor: middle; 
   }
-  .axis .title {
+  .title {
+    font: 10px sans-serif;
     font-weight: bold;
     text-anchor: middle;
-  }
-  .axis path,
-  .axis line {
-    fill: none;
-    stroke: #000;
-    shape-rendering: crispEdges;
-  }
-  .x.axis path {
-    fill: none;
-    stroke: #000;
-    shape-rendering: crispEdges;
   }
   .nav .area {
     fill: lightgrey;
@@ -44,8 +30,15 @@
     fill: black;
     fill-opacity: 0.3;
   }
-  .viewport .extent {
+  .viewport .selection {
+    stroke: grey;
     fill: green;
+  }
+  .viewport .handle {
+    display: none;
+  }
+  .viewport .overlay {
+    visibility: hidden;
   }
   .well {
     padding-top: 0px;
@@ -66,7 +59,7 @@
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.1/d3.min.js"></script>
 <!--<script src="../_lib/d3.min.js"></script>-->
 <script src="realTimeChartMulti.js"></script>
 <script>
@@ -111,16 +104,16 @@ var meanMs = 1000 * tX, // milliseconds
     dev = 200 * tX; // std dev
 
 // define time scale
-var timeScale = d3.scale.linear()
+var timeScale = d3.scaleLinear()
     .domain([300 * tX, 1700 * tX])
     .range([300 * tX, 1700 * tX])
     .clamp(true);
 
 // define function that returns normally distributed random numbers
-var normal = d3.random.normal(meanMs, dev);
+var normal = d3.randomNormal(meanMs, dev);
 
 // define color scale
-var color = d3.scale.category10();
+var color = d3.scaleOrdinal(d3.schemeCategory10);
 
 // in a normal use case, real time data would arrive through the network or some other mechanism
 var d = -1;
@@ -193,5 +186,4 @@ function dataGenerator() {
 
 // start the data generator
 dataGenerator();
-
 </script>
