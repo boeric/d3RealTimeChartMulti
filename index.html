@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <!-- Author: Bo Ericsson -->
   <title>Real Time Chart Multi</title>
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap.min.css" media="all">
   <style>
   .chartTitle {
     font-size: 12px;
@@ -30,7 +31,14 @@
     fill-opacity: 0.3;
   }
   .viewport .selection {
+    stroke: grey;
     fill: green;
+  }
+  .viewport .handle {
+    display: none;
+  }
+  .viewport .overlay {
+    visibility: hidden;
   }
   .well {
     padding-top: 0px;

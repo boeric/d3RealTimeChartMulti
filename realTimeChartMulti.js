@@ -146,8 +146,8 @@ function realTimeChartMulti() {
     y = d3.scalePoint().domain(yDomain).rangeRound([height, 0]).padding([1])
 
     // define main chart axis
-    xAxis = d3.axisBottom();
-    yAxis = d3.axisLeft();
+    xAxis = d3.axisBottom(x);
+    yAxis = d3.axisLeft(y);
 
     // add nav chart
     var nav = svg.append("g")
@@ -178,7 +178,7 @@ function realTimeChartMulti() {
     yNav = d3.scalePoint().domain(yDomain).rangeRound([heightNav, 0]).padding([1])
 
     // define nav axis
-    var xAxisNav = d3.axisBottom();
+    var xAxisNav = d3.axisBottom(xNav);
 
     // compute initial time domains...
     var ts = new Date().getTime();
@@ -196,51 +196,59 @@ function realTimeChartMulti() {
 
     // set the scale domains for main and nav charts
     x.domain([startTimeViewport, endTimeViewport]);
-    xNav.domain([startTime, endTime]); 
+    xNav.domain([startTime, endTime]);
 
     // update axis with modified scale
     xAxis.scale(x)(xAxisG);
     yAxis.scale(y)(yAxisG);
     xAxisNav.scale(xNav)(xAxisGNav);
 
+    // initial data is empty
+    data = [];
+
     // create brush (moveable, changable rectangle that determines the time domain of main chart)
-    var viewport = d3.brushX(xNav)
-        .extent([startTimeViewport, endTimeViewport])
-        .on("brush", function () {
-          // get the current time extent of viewport
-          var extent = viewport.extent();
-          startTimeViewport = extent[0];
-          endTimeViewport = extent[1];
+    var viewport = d3.brushX()
+        .extent([[0, 0], [widthNav, heightNav]])
+        .on("brush", brushed);
 
-          // compute viewport extent in milliseconds
-          intervalViewport = endTimeViewport.getTime() - startTimeViewport.getTime();
-          offsetViewport = startTimeViewport.getTime() - startTime.getTime();
+    function brushed () {
+      // get the current time extent of viewport
+      var extent = d3.event.selection;
+      startTimeViewport = xNav.invert(extent[0]);
+      endTimeViewport = xNav.invert(extent[1]);
 
-          // handle invisible viewport
-          if (intervalViewport == 0) {
-            intervalViewport = maxSeconds * 1000;
-            offsetViewport = 0;
-          }
+      if (debug) {
+        console.log("startTimeViewport", startTimeViewport);
+        console.log("endTimeViewport", endTimeViewport);
+      }
 
-          // update the x domain of the main chart
-          x.domain(d3.event.selection === null ? xNav.domain() : extent);
+      // compute viewport extent in milliseconds
+      intervalViewport = endTimeViewport.getTime() - startTimeViewport.getTime();
+      offsetViewport = startTimeViewport.getTime() - startTime.getTime();
 
-          // update the x axis of the main chart
-          xAxis.scale(x)(xAxisG);
+      // handle invisible viewport
+      if (intervalViewport == 0) {
+        intervalViewport = maxSeconds * 1000;
+        offsetViewport = 0;
+      }
 
-          // update display
-          refresh();
-        });
+      // update the x domain of the main chart
+      x.domain([startTimeViewport, endTimeViewport]);
+
+      // update the x axis of the main chart
+      xAxis.scale(x)(xAxisG);
+
+      // update display
+      refresh();
+    }
 
     // create group and assign to brush
     var viewportG = nav.append("g")
         .attr("class", "viewport")
         .call(viewport)
-        .selectAll("rect")
-        .attr("height", heightNav);
+        .call(viewport.move, [xNav(startTimeViewport), xNav(endTimeViewport)]);
 
     // initial invocation; update display
-    data = [];
     refresh();
 
     // function to refresh the viz upon changes of the time domain
@@ -405,10 +413,8 @@ function realTimeChartMulti() {
       if (halted) return;
 
       // get current viewport extent
-      //var extent = viewport ? xNav.domain() : viewport.extent();
-      var extent = viewport.extent().length == 2 ? viewport.extent() : xNav.domain();
-      var interval = extent[1].getTime() - extent[0].getTime();
-      var offset = extent[0].getTime() - xNav.domain()[0].getTime();
+      var interval = endTimeViewport.getTime() - startTimeViewport.getTime();
+      var offset = startTimeViewport.getTime() - xNav.domain()[0].getTime();
 
       // compute new nav extents
       endTime = new Date();
@@ -417,7 +423,7 @@ function realTimeChartMulti() {
       // compute new viewport extents
       startTimeViewport = new Date(startTime.getTime() + offset);
       endTimeViewport = new Date(startTimeViewport.getTime() + interval);
-      viewport.extent([startTimeViewport, endTimeViewport])
+      viewport.move(viewportG, [xNav(startTimeViewport), xNav(endTimeViewport)]);
 
       // update scales
       x.domain([startTimeViewport, endTimeViewport]);
