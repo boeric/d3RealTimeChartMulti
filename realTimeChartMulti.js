@@ -1,4 +1,4 @@
-<!-- Author: Bo Ericsson, bo@boe.net -->
+<!-- Author: Bo Ericsson, bo@boe.net, updated for d3 v5 by Sean Kauffman, seanmk.com -->
 <!-- Inspiration from numerous examples by Mike Bostock, http://bl.ocks.org/mbostock, -->
 <!-- and example by Andy Aiken, http://blog.scottlogic.com/2014/09/19/interactive.html -->
 'use strict';
